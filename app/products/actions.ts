@@ -6,6 +6,7 @@ import { findFamily } from "./data";
 
 type ProductChange =
   | { type: "add"; name: string }
+  | { type: "add-many"; names: string[] }
   | { type: "toggle"; id: string; bought: boolean }
   | { type: "remove"; id: string }
   | { type: "clear-bought" };
@@ -30,6 +31,20 @@ export async function changeProduct(change: ProductChange) {
       const name = typeof change.name === "string" ? change.name.trim() : "";
       if (!name || name.length > 120) return "Podaj nazwę produktu do 120 znaków.";
       const { error } = await products.insert({ family_id: familyId, name });
+      if (error) return writeError;
+      break;
+    }
+    case "add-many": {
+      if (!Array.isArray(change.names) || change.names.length < 1 || change.names.length > 24) {
+        return "Wybierz od 1 do 24 produktów.";
+      }
+      const names = change.names.map((name) => typeof name === "string" ? name.trim() : "");
+      if (names.some((name) => !name || name.length > 120)) {
+        return "Każda nazwa produktu może mieć do 120 znaków.";
+      }
+      const { error } = await products.insert(
+        [...new Set(names)].map((name) => ({ family_id: familyId, name })),
+      );
       if (error) return writeError;
       break;
     }

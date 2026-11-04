@@ -354,6 +354,69 @@ button {
   background: #eef3e7;
 }
 
+.meal-suggestions {
+  margin-top: 15px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #f8faf3;
+}
+
+.meal-suggestions[open] {
+  padding-bottom: 12px;
+}
+
+.meal-suggestions summary {
+  min-height: 44px;
+  padding: 11px 0;
+  color: var(--green);
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.meal-form label {
+  display: block;
+  margin: 0 0 6px;
+}
+
+.meal-status {
+  margin: 8px 0 0;
+  color: var(--muted);
+}
+
+.meal-status:empty {
+  margin: 0;
+}
+
+.meal-items {
+  margin-top: 10px;
+  background: var(--paper);
+}
+
+.meal-items .item-label input:checked + span {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.meal-add {
+  min-height: 44px;
+  margin-top: 10px;
+}
+
+.meal-suggestions .auth-error {
+  margin-top: 8px;
+}
+
+@media (max-width: 420px) {
+  .meal-form .add-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .meal-form .add-button {
+    min-height: 44px;
+  }
+}
+
 .bought-items .items {
   margin-top: 6px;
 }

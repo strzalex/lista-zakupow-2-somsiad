@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import type { FormEvent } from "react";
+import MealSuggestions from "./meal-suggestions/panel";
 import { changeProduct } from "./products/actions";
 
 type Item = {
@@ -185,6 +186,8 @@ export default function ShoppingList({
           </button>
         </form>
         {writeError && <p className="auth-error" role="alert">{writeError}</p>}
+
+        {shared && <MealSuggestions />}
 
         {remainingItems.length > 0 ? (
           renderItems(remainingItems, "Do kupienia")
