@@ -1,18 +1,34 @@
-# Domowa lista
+# Domowa lista · SOMSIAD
 
-Prosta lista zakupów w Next.js. Dodawaj produkty, odhaczaj kupione i usuwaj pozycje pojedynczo lub zbiorczo.
+Wersja szkoleniowa rodzinnej listy zakupów. Ania i Bartek korzystają ze wspólnej listy w Supabase. Somsiad ma konto, ale nie należy do rodziny.
 
 ## Uruchomienie
 
-Skopiuj `.env.example` do `.env.local` i wpisz adres projektu oraz klucz `publishable` z panelu Supabase. Logowanie korzysta z kont utworzonych w Supabase Auth.
+W `.env.local` ustaw `SUPABASE_URL` i `SUPABASE_PUBLISHABLE_KEY` z osobnego projektu demonstracyjnego Supabase.
 
 ```sh
 npm ci
-npm run dev
+npm run dev -- --port 3001
 ```
 
-Otwórz [localhost:3000](http://localhost:3000).
+Otwórz [localhost:3001](http://localhost:3001). Konta demonstracyjne to `ania@local.pl`, `bartek@local.pl` i `somsiad@local.pl`. Hasła do przygotowanej bazy są w lokalnym pliku `.env.demo-accounts`.
 
-Lista zapisuje się w `localStorage` przeglądarki. Czyszczenie danych witryny usuwa zapisane produkty. Inne przeglądarki i urządzenia mają własne listy.
+## Pokaz na zajęciach
 
-Kompilację produkcyjną uruchomisz przez `npm run build`, a gotową aplikację przez `npm start`.
+1. Zaloguj się jako Ania i dodaj produkt. Zaloguj się jako Bartek i sprawdź wspólną listę.
+2. Zaloguj się jako Somsiad. Na stronie głównej zobaczysz jego listę zapisywaną w tej przeglądarce. Kliknij **Dev mode** w nagłówku, żeby zobaczyć rzeczywistą odpowiedź Supabase na zapytanie `select('*')` bez filtra rodziny, wykonane z sesji Somsiada. Przy wyłączonym RLS API pozwala zalogowanym kontom również zapisywać dane w tej tabeli, choć Dev mode daje tylko podgląd.
+3. W SQL Editorze projektu demonstracyjnego włącz RLS i odśwież podgląd. Somsiad zobaczy `[]`, a Ania i Bartek nadal zobaczą wspólną listę.
+
+   ```sql
+   alter table public.products enable row level security;
+   ```
+
+4. Przed kolejnym pokazem przywróć celowo podatny stan.
+
+   ```sql
+   alter table public.products disable row level security;
+   ```
+
+## Odtworzenie bazy demonstracyjnej
+
+W pustym projekcie Supabase wykonaj po kolei migracje z `supabase/migrations`. W Supabase Auth utwórz trzy powyższe konta z hasłami szkoleniowymi i włącz potwierdzenie e-maila dla każdego konta przy tworzeniu. Następnie uruchom `supabase/seed.sql` w SQL Editorze. Seed przypisuje do rodziny wyłącznie Anię i Bartka oraz dodaje fikcyjne produkty.

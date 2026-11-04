@@ -31,5 +31,5 @@ export async function getAccount() {
   const client = createAuthClient({ getAll: () => cookieStore.getAll(), setAll: () => {} });
   const { data } = (await client?.auth.getClaims()) ?? {};
 
-  return { configured: client !== null, email: data?.claims.email };
+  return { client, configured: client !== null, email: data?.claims.email, userId: data?.claims.sub };
 }

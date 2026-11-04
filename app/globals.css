@@ -57,6 +57,14 @@ button {
   font-weight: 750;
 }
 
+.masthead-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 16px;
+  min-width: 0;
+}
+
 .hero {
   display: grid;
   grid-template-columns: 1fr minmax(145px, 36%);
@@ -384,6 +392,29 @@ button {
 
 .storage-error {
   color: #903c31;
+}
+
+.demo-shell {
+  padding: 24px 0 36px;
+}
+
+.demo-shell h1 {
+  margin: 12px 0 0;
+  font-size: 28px;
+}
+
+.demo-shell h2 {
+  margin: 22px 0 6px;
+  font-size: 17px;
+}
+
+.demo-code {
+  margin: 0;
+  padding: 14px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f8faf3;
 }
 
 .sr-only {
