@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
+import { lookupProductByBarcode } from "./products/barcode";
 
 type Item = {
   id: string;
@@ -10,6 +11,11 @@ type Item = {
 };
 
 const STORAGE_KEY = "domowa-lista:zakupy";
+
+function appendItem(items: Item[], name: string) {
+  const id = crypto.getRandomValues(new Uint32Array(4)).join("-");
+  return [...items, { id, name, bought: false }];
+}
 
 function readItems(value: string | null): Item[] {
   if (value === null) return [];
@@ -29,7 +35,11 @@ function readItems(value: string | null): Item[] {
 
 export default function ShoppingList() {
   const [items, setItems] = useState<Item[]>([]);
+  const latestItems = useRef(items);
   const [name, setName] = useState("");
+  const [barcode, setBarcode] = useState("");
+  const [barcodeError, setBarcodeError] = useState<string | null>(null);
+  const [addingBarcode, setAddingBarcode] = useState(false);
   const [ready, setReady] = useState(false);
   const [storageError, setStorageError] = useState(false);
   const input = useRef<HTMLInputElement>(null);
@@ -37,7 +47,9 @@ export default function ShoppingList() {
   useEffect(() => {
     function restoreItems() {
       try {
-        setItems(readItems(window.localStorage.getItem(STORAGE_KEY)));
+        const restoredItems = readItems(window.localStorage.getItem(STORAGE_KEY));
+        latestItems.current = restoredItems;
+        setItems(restoredItems);
         setStorageError(false);
       } catch {
         setStorageError(true);
@@ -57,6 +69,7 @@ export default function ShoppingList() {
   }, []);
 
   function saveItems(nextItems: Item[]) {
+    latestItems.current = nextItems;
     setItems(nextItems);
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextItems));
@@ -69,12 +82,33 @@ export default function ShoppingList() {
   function addItem(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const trimmedName = name.trim();
-    if (!ready || !trimmedName) return;
+    if (!ready || addingBarcode || !trimmedName) return;
 
-    const id = crypto.getRandomValues(new Uint32Array(4)).join("-");
-    saveItems([...items, { id, name: trimmedName, bought: false }]);
+    saveItems(appendItem(latestItems.current, trimmedName));
     setName("");
     input.current?.focus();
+  }
+
+  async function addByBarcode(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!ready || addingBarcode || !barcode.trim()) return;
+
+    setBarcodeError(null);
+    setAddingBarcode(true);
+    try {
+      const result = await lookupProductByBarcode(barcode);
+      if ("error" in result) {
+        setBarcodeError(result.error);
+        return;
+      }
+
+      saveItems(appendItem(latestItems.current, result.name));
+      setBarcode("");
+    } catch {
+      setBarcodeError("Nie udało się dodać produktu z kodu. Spróbuj ponownie lub wpisz nazwę produktu.");
+    } finally {
+      setAddingBarcode(false);
+    }
   }
 
   const remainingItems = items.filter((item) => !item.bought);
@@ -89,6 +123,7 @@ export default function ShoppingList() {
               <input
                 type="checkbox"
                 checked={item.bought}
+                disabled={addingBarcode}
                 onChange={(event) => {
                   const bought = event.target.checked;
                   saveItems(items.map((entry) => entry.id === item.id ? { ...entry, bought } : entry));
@@ -99,6 +134,7 @@ export default function ShoppingList() {
             <button
               className="remove-button"
               type="button"
+              disabled={addingBarcode}
               aria-label={`Usuń produkt: ${item.name}`}
               onClick={() => saveItems(items.filter((entry) => entry.id !== item.id))}
             >
@@ -135,13 +171,41 @@ export default function ShoppingList() {
             disabled={!ready}
             required
           />
-          <button className="add-button" type="submit" disabled={!ready || !name.trim()}>
+          <button className="add-button" type="submit" disabled={!ready || addingBarcode || !name.trim()}>
             <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
             </svg>
             Dodaj
           </button>
         </form>
+
+        <details className="bought-items barcode-entry">
+          <summary>Dodaj kodem kreskowym</summary>
+          <form className="add-form" onSubmit={addByBarcode}>
+            <label className="sr-only" htmlFor="barcode">Kod kreskowy</label>
+            <input
+              id="barcode"
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder="Cyfry spod kodu kreskowego"
+              value={barcode}
+              onChange={(event) => {
+                setBarcode(event.target.value);
+                setBarcodeError(null);
+              }}
+              disabled={!ready}
+              readOnly={addingBarcode}
+              required
+            />
+            <button className="add-button" type="submit" disabled={!ready || addingBarcode || !barcode.trim()}>
+              Dodaj
+            </button>
+          </form>
+          {addingBarcode && <p className="barcode-note" role="status">Pobieranie produktu…</p>}
+          {barcodeError && <p className="auth-error" role="alert">{barcodeError}</p>}
+          <p className="barcode-note">Źródło danych <a href="https://world.openfoodfacts.org/">Open Food Facts</a></p>
+        </details>
 
         {remainingItems.length > 0 ? (
           renderItems(remainingItems, "Do kupienia")
@@ -164,7 +228,7 @@ export default function ShoppingList() {
             <summary>Kupione ({boughtItems.length})</summary>
             {renderItems(boughtItems, "Kupione")}
             <div className="card-actions">
-              <button type="button" onClick={() => saveItems(remainingItems)}>
+              <button type="button" disabled={addingBarcode} onClick={() => saveItems(remainingItems)}>
                 Usuń kupione
               </button>
             </div>

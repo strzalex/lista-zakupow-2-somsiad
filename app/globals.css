@@ -346,6 +346,20 @@ button {
   background: #eef3e7;
 }
 
+.barcode-entry .add-form {
+  margin-top: 6px;
+}
+
+.barcode-note {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.barcode-note a {
+  color: var(--green);
+}
+
 .bought-items .items {
   margin-top: 6px;
 }
